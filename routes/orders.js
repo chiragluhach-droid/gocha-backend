@@ -56,11 +56,23 @@ router.post('/', async (req, res) => {
       console.warn('Populate restaurant name failed', popErr);
     }
 
-    // Emit to restaurant channel if io available — include restaurant name where possible
+    // Emit to restaurant channel if io available — include full order object
     try {
       if (io) {
-        const restaurantName = order.restaurantId && order.restaurantId.name ? order.restaurantId.name : undefined;
-        io.to(`restaurant:${restaurantId}`).emit('order.created', { orderId: order._id, restaurantId, restaurantName, items: order.items, total: order.total, customer: order.customer, createdAt: order.createdAt });
+        io.to(`restaurant:${restaurantId}`).emit('order.created', {
+          _id: order._id,
+          orderId: order._id,
+          restaurantId: order.restaurantId._id,
+          restaurantName: order.restaurantId?.name,
+          items: order.items,
+          subtotal: order.subtotal,
+          platformFee: order.platformFee,
+          tax: order.tax,
+          total: order.total,
+          customer: order.customer,
+          createdAt: order.createdAt,
+          status: order.status
+        });
       }
     } catch (emitErr) {
       console.error('Emit error', emitErr);

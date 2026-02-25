@@ -14,6 +14,7 @@ const ordersRouter = require('./routes/orders');
 const authRouter = require('./routes/auth');
 const restaurantsRouter = require('./routes/restaurants');
 const usersRouter = require('./routes/users');
+const paymentRouter = require('./routes/payment');
 
 const app = express();
 
@@ -22,6 +23,7 @@ const app = express();
 app.use(
   cors({
     origin: '*',
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   })
@@ -54,6 +56,7 @@ app.use('/api/orders', ordersRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/restaurants', restaurantsRouter);
 app.use('/api/users', usersRouter);
+app.use('/api/payment', paymentRouter);
 
 /* ------------------ HTTP SERVER + SOCKET.IO ------------------ */
 

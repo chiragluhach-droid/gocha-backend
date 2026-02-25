@@ -103,6 +103,26 @@ router.get('/me', async (req, res) => {
       return res.status(401).json({ message: 'Invalid token' });
     }
 
+    // If token belongs to a vendor session, return vendor info
+    if (payload.role === 'vendor' && payload.restaurantId) {
+      const Restaurant = require('../models/Restaurant');
+      const restaurant = await Restaurant.findById(payload.restaurantId).select('-vendorPasskey');
+      if (!restaurant) return res.status(404).json({ message: 'Vendor not found' });
+
+      // Check remaining token time and refresh if close to expiry
+      const decoded = jwt.decode(token);
+      const now = Math.floor(Date.now() / 1000);
+      const timeLeft = (decoded && decoded.exp) ? decoded.exp - now : 0;
+      const REFRESH_THRESHOLD = 60 * 60 * 24; // 1 day in seconds
+      let newToken = null;
+      if (timeLeft > 0 && timeLeft < REFRESH_THRESHOLD) {
+        newToken = jwt.sign({ role: 'vendor', restaurantId: restaurant._id }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
+      }
+
+      return res.json({ vendor: { restaurantId: restaurant._id, name: restaurant.name }, token: newToken });
+    }
+
+    // Otherwise assume a regular user token
     const user = await User.findById(payload.id).select('-password');
     if (!user) return res.status(404).json({ message: 'User not found' });
 
