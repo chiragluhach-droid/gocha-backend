@@ -3,7 +3,6 @@ const router = express.Router();
 const Order = require('../models/Order');
 const Restaurant = require('../models/Restaurant');
 const User = require('../models/User');
-const { sendExpoPush } = require('../utils/notifications');
 // QR verification removed; bcrypt not required
 
 // PATCH /api/orders/:id/status
@@ -13,20 +12,7 @@ router.patch('/:id/status', async (req, res) => {
     if (!status) return res.status(400).json({ message: 'Missing status' });
     const order = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true });
     if (!order) return res.status(404).json({ message: 'Order not found' });
-    // Notify customer about status update (if push token exists)
-    try {
-      const phone = order.customer?.phone;
-      if (phone) {
-        const user = await User.findOne({ 'phone': phone });
-        if (user && user.pushToken) {
-          const title = 'Order update';
-          const body = `Your order ${order._id} is now ${status}`;
-          sendExpoPush(user.pushToken, title, body, { orderId: order._id, status });
-        }
-      }
-    } catch (notifyErr) {
-      console.error('Notify error', notifyErr);
-    }
+    // Notifications removed
     res.json({ order });
   } catch (err) {
     console.error(err);
@@ -94,20 +80,7 @@ router.post('/', async (req, res) => {
       console.error('Emit error', emitErr);
     }
 
-    // Send push notification to customer when order is created
-    try {
-      const phone = order.customer?.phone;
-      if (phone) {
-        const user = await User.findOne({ phone });
-        if (user && user.pushToken) {
-          const title = 'Order placed';
-          const body = `Your order ${order._id} was placed successfully`;
-          sendExpoPush(user.pushToken, title, body, { orderId: order._id });
-        }
-      }
-    } catch (notifyErr) {
-      console.error('Notify error', notifyErr);
-    }
+    // Notifications removed
 
     res.status(201).json({ order });
   } catch (err) {
